@@ -1,24 +1,18 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Drawer,
   Box,
   Typography,
-  TextField,
   Button,
   IconButton,
-  List,
-  ListItem,
-  ListItemText,
   Divider,
-  Autocomplete,
-  CircularProgress,
   Alert,
 } from '@mui/material';
-import {
-  Close as CloseIcon,
-  LocationOn as LocationOnIcon,
-} from '@mui/icons-material';
+import CloseIcon from '@mui/icons-material/Close';
 import RouteIcon from '@mui/icons-material/Route';
+
+import AddressAutocomplete from './AddressAutocomplete';
+import SelectedPointsList from './SelectedPointsList';
 
 interface Point {
   lat: number;
@@ -60,7 +54,11 @@ const SideMenu = ({
   const [loadingEnd, setLoadingEnd] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchAddressSuggestions = async (query: string, setSuggestions: (suggestions: AddressSuggestion[]) => void, setLoading: (loading: boolean) => void) => {
+  const fetchAddressSuggestions = async (
+    query: string,
+    setSuggestions: (suggestions: AddressSuggestion[]) => void,
+    setLoading: (loading: boolean) => void
+  ) => {
     if (!query) {
       setSuggestions([]);
       return;
@@ -69,7 +67,9 @@ const SideMenu = ({
     setLoading(true);
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=br&limit=5&addressdetails=1`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          query
+        )}&countrycodes=br&limit=5&addressdetails=1`
       );
       const data = await response.json();
       setSuggestions(data);
@@ -134,76 +134,38 @@ const SideMenu = ({
       <Box sx={{ p: 2 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h6">Definir Rota</Typography>
-          <IconButton onClick={onClose}>
+          <IconButton aria-label="Close" onClick={onClose}>
             <CloseIcon />
           </IconButton>
         </Box>
 
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)} role="alert">
             {error}
           </Alert>
         )}
 
         <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle1" sx={{ mb: 1 }}>
-            Ponto de Partida
-          </Typography>
-          <Autocomplete
-            freeSolo
+          <AddressAutocomplete
+            label="Ponto de Partida"
+            placeholder="Digite o endereço de partida"
             options={startSuggestions}
-            getOptionLabel={(option) => typeof option === 'string' ? option : option.display_name}
             loading={loadingStart}
-            onInputChange={(_, newValue) => setStartAddress(newValue)}
-            onChange={(_, newValue) => handleStartAddressSelect(newValue as AddressSuggestion)}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                fullWidth
-                size="small"
-                placeholder="Digite o endereço de partida"
-                InputProps={{
-                  ...params.InputProps,
-                  endAdornment: (
-                    <>
-                      {loadingStart ? <CircularProgress color="inherit" size={20} /> : null}
-                      {params.InputProps.endAdornment}
-                    </>
-                  ),
-                }}
-              />
-            )}
+            value={startAddress}
+            onInputChange={setStartAddress}
+            onOptionSelect={handleStartAddressSelect}
           />
         </Box>
 
         <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle1" sx={{ mb: 1 }}>
-            Ponto de Chegada
-          </Typography>
-          <Autocomplete
-            freeSolo
+          <AddressAutocomplete
+            label="Ponto de Chegada"
+            placeholder="Digite o endereço de destino"
             options={endSuggestions}
-            getOptionLabel={(option) => typeof option === 'string' ? option : option.display_name}
             loading={loadingEnd}
-            onInputChange={(_, newValue) => setEndAddress(newValue)}
-            onChange={(_, newValue) => handleEndAddressSelect(newValue as AddressSuggestion)}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                fullWidth
-                size="small"
-                placeholder="Digite o endereço de destino"
-                InputProps={{
-                  ...params.InputProps,
-                  endAdornment: (
-                    <>
-                      {loadingEnd ? <CircularProgress color="inherit" size={20} /> : null}
-                      {params.InputProps.endAdornment}
-                    </>
-                  ),
-                }}
-              />
-            )}
+            value={endAddress}
+            onInputChange={setEndAddress}
+            onOptionSelect={handleEndAddressSelect}
           />
         </Box>
 
@@ -223,29 +185,10 @@ const SideMenu = ({
         <Typography variant="subtitle1" sx={{ mb: 1 }}>
           Pontos Selecionados
         </Typography>
-        <List>
-          {startPoint && (
-            <ListItem>
-              <LocationOnIcon color="primary" sx={{ mr: 1 }} />
-              <ListItemText
-                primary="Partida"
-                secondary={startPoint.address}
-              />
-            </ListItem>
-          )}
-          {endPoint && (
-            <ListItem>
-              <LocationOnIcon color="secondary" sx={{ mr: 1 }} />
-              <ListItemText
-                primary="Destino"
-                secondary={endPoint.address}
-              />
-            </ListItem>
-          )}
-        </List>
+        <SelectedPointsList startPoint={startPoint} endPoint={endPoint} />
       </Box>
     </Drawer>
   );
 };
 
-export default SideMenu; 
+export default SideMenu;
