@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render, waitFor } from '@testing-library/react';
 import { vi, describe, expect, beforeEach, it } from 'vitest';
-import Map from '../components/Map';
+import Map from '../pages/Map';
 
 // Mock react-leaflet
 vi.mock('react-leaflet', async () => {

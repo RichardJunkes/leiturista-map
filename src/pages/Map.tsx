@@ -4,8 +4,8 @@ import L from 'leaflet';
 import { useState, useEffect } from 'react';
 import { Box, IconButton, Alert, Snackbar } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import SideMenu from './SideMenu';
-import { MapMarker } from './MapMarker';
+import SideMenu from '../components/SideMenu';
+import { MapMarker } from '../components/MapMarker';
 import { fetchRoute } from '../services/routeService';
 
 // Fix para o ícone do marcador
@@ -83,10 +83,11 @@ export default function Map() {
       // Usando a API do OpenRouteService
       const routePoints = await fetchRoute(startPoint, endPoint);
 
-      if (true) {
+      if (routePoints.length === 0) {
         throw new Error('Nenhum ponto na rota');
       }
 
+      setRoute(routePoints);
     } catch (error) {
       console.error('Erro ao calcular rota:', error);
       setError(`Não foi possível calcular a rota`);

@@ -1,4 +1,4 @@
-import { Point } from '../components/Map';
+import { Point } from '../pages/Map';
 
 interface RoutePoint {
   lat: number,
