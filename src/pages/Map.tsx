@@ -1,10 +1,12 @@
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Polyline, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useState, useEffect } from 'react';
-import { Box, Typography, IconButton, Alert, Snackbar } from '@mui/material';
+import { Box, IconButton, Alert, Snackbar } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import SideMenu from './SideMenu';
+import SideMenu from '../components/SideMenu';
+import { MapMarker } from '../components/MapMarker';
+import { fetchRoute } from '../services/routeService';
 
 // Fix para o ícone do marcador
 const icon = L.icon({
@@ -17,7 +19,7 @@ const icon = L.icon({
   shadowSize: [41, 41]
 });
 
-interface Point {
+export interface Point {
   lat: number;
   lng: number;
   address: string;
@@ -79,26 +81,7 @@ export default function Map() {
 
     try {
       // Usando a API do OpenRouteService
-      const response = await fetch(
-        `https://api.openrouteservice.org/v2/directions/driving-car?api_key=5b3ce3597851110001cf6248d6a497e3a5f24d6dae5c227d84a3edd3&start=${startPoint.lng},${startPoint.lat}&end=${endPoint.lng},${endPoint.lat}`
-      );
-
-      if (!response.ok) {
-        throw new Error(`Erro ao calcular rota: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      
-      if (!data.features || !data.features[0] || !data.features[0].geometry) {
-        throw new Error('Dados da rota inválidos');
-      }
-
-      // Convertendo as coordenadas do GeoJSON para o formato esperado pelo Polyline
-      const coordinates = data.features[0].geometry.coordinates;
-      const routePoints = coordinates.map((coord: number[]) => ({
-        lat: coord[1], // OpenRouteService retorna [longitude, latitude]
-        lng: coord[0]
-      }));
+      const routePoints = await fetchRoute(startPoint, endPoint);
 
       if (routePoints.length === 0) {
         throw new Error('Nenhum ponto na rota');
@@ -107,7 +90,7 @@ export default function Map() {
       setRoute(routePoints);
     } catch (error) {
       console.error('Erro ao calcular rota:', error);
-      setError(`Não foi possível calcular a rota: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      setError(`Não foi possível calcular a rota`);
     }
   };
 
@@ -118,6 +101,7 @@ export default function Map() {
   return (
     <Box sx={{ height: '100vh', width: '100%', position: 'relative' }}>
       <IconButton
+        aria-label="Abrir menu"
         onClick={() => setIsMenuOpen(true)}
         sx={{
           position: 'absolute',
@@ -146,30 +130,31 @@ export default function Map() {
         />
         
         {startPoint && (
-          <Marker position={[startPoint.lat, startPoint.lng]} icon={icon}>
-            <Popup>
-              <Typography variant="body2">Ponto de Partida</Typography>
-              <Typography variant="caption">{startPoint.address}</Typography>
-            </Popup>
-          </Marker>
+          <MapMarker
+            position={startPoint}
+            label="Ponto de Partida"
+            address={startPoint.address}
+            icon={icon}
+          />
         )}
 
         {endPoint && (
-          <Marker position={[endPoint.lat, endPoint.lng]} icon={icon}>
-            <Popup>
-              <Typography variant="body2">Ponto de Chegada</Typography>
-              <Typography variant="caption">{endPoint.address}</Typography>
-            </Popup>
-          </Marker>
+          <MapMarker
+            position={endPoint}
+            label="Ponto de Chegada"
+            address={endPoint.address}
+            icon={icon}
+          />
         )}
 
-        {route.length > 0 && (
+        {/* {route.length > 0 && ( */}
           <Polyline
+            data-testid="polyline"
             positions={route.map(point => [point.lat, point.lng])}
             color="blue"
             weight={3}
           />
-        )}
+        {/* )} */}
       </MapContainer>
 
       <SideMenu
@@ -188,7 +173,7 @@ export default function Map() {
         onClose={handleCloseError}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert onClose={handleCloseError} severity="error" sx={{ width: '100%' }}>
+        <Alert role="alert" onClose={handleCloseError} severity="error" sx={{ width: '100%' }}>
           {error}
         </Alert>
       </Snackbar>

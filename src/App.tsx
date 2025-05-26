@@ -1,5 +1,5 @@
 import { AppBar, Toolbar, Typography, Container } from '@mui/material';
-import Map from './components/Map';
+import Map from './pages/Map';
 
 function App() {
   return (
